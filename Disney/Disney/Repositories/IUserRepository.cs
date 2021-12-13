@@ -4,11 +4,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace Disney.Contracts
+namespace Disney.Repositories
 {
     public interface IUserRepository
     {
         public User FindByEmail(string email);
+        User GetUser(UserDTO userModel);
         public void Save(User user);
     }
 }

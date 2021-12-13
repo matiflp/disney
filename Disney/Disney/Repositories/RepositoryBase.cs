@@ -1,5 +1,4 @@
-﻿using Disney.Contracts;
-using Disney.Models;
+﻿using Disney.Models;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -7,7 +6,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
 
-namespace Disney.Repository
+namespace Disney.Repositories
 {
     public abstract class RepositoryBase<T> : IRepositoryBase<T> where T : class
     {

@@ -12,8 +12,8 @@ namespace Disney.Models
         public string Title { get; set; }
         public DateTime? CreationDate { get; set; }
         public byte Qualification { get; set; }
-        public long CharacterId { get; set; }
-        public Character Character { get; set; }
+
+        public ICollection<CharacterMovie> CharacterMovies { get; set; }
         public ICollection<Gerne> Gernes { get; set; }
     }
 }

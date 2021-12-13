@@ -4,7 +4,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
 
-namespace Disney.Contracts
+namespace Disney.Repositories
 {
     public interface IRepositoryBase<T>
     {

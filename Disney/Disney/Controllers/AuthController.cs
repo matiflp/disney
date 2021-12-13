@@ -1,15 +1,18 @@
-﻿using Disney.Contracts;
+﻿using Disney.Auth;
 using Disney.Models;
+using Disney.Repositories;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System;
+using Microsoft.Extensions.Configuration;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 
 namespace Disney.Controllers
 {
@@ -17,10 +20,15 @@ namespace Disney.Controllers
     [ApiController]
     public class AuthController : ControllerBase
     {
-        private IUserRepository _userRepository;
+        private readonly IConfiguration _config;
+        private readonly ITokenService _tokenService;
+        private readonly IUserRepository _userRepository;
+        private string generatedToken = null;
 
-        public AuthController(IUserRepository userRepository)
+        public AuthController(IConfiguration config, ITokenService tokenService, IUserRepository userRepository)
         {
+            _config = config;
+            _tokenService = tokenService;
             _userRepository = userRepository;
         }
 
@@ -48,11 +56,11 @@ namespace Disney.Controllers
                 if (dbUser != null)
                     return StatusCode(403, "Email está en uso");
 
-                User newUser = new User
+                User newUser = new()
                 {
                     Email = user.Email,
+                    UserName = user.UserName,
                     Password = user.Password,
-                    Name = user.Name
                 };
 
                 _userRepository.Save(newUser);
@@ -67,49 +75,33 @@ namespace Disney.Controllers
 
         // POST: api/Auth/login
         [HttpPost("login")]
-        public async Task<IActionResult> Login([FromBody] UserDTO user)
+        public IActionResult Login([FromBody] UserDTO user)
         {
-            try
+            User validUser = _userRepository.GetUser(user);
+            if (user == null || !String.Equals(validUser.Password, user.Password))
+                return Unauthorized();
+
+            //IActionResult response = Unauthorized();
+
+            if (validUser != null)
             {
-                User userAuth = _userRepository.FindByEmail(user.Email);
-                if (user == null || !String.Equals(userAuth.Password, user.Password))
-                    return Unauthorized();
+                generatedToken = _tokenService.BuildToken(_config["Jwt:Key"].ToString(), _config["Jwt:Issuer"].ToString(),
+                validUser);
 
-                var claims = new List<Claim>
-                    {
-                        new Claim("User", user.Email)
-                    };
-
-                var claimsIdentity = new ClaimsIdentity(
-                    claims, CookieAuthenticationDefaults.AuthenticationScheme);
-
-                await HttpContext.SignInAsync(
-                        CookieAuthenticationDefaults.AuthenticationScheme,
-                        new ClaimsPrincipal(claimsIdentity));
-
-                return Ok();
+                if (generatedToken != null)
+                {
+                    HttpContext.Session.SetString("Token", generatedToken);
+                    return Ok();
+                }
+                else
+                {
+                    return StatusCode(500, "Internal server error");
+                }
             }
-            catch (Exception ex)
+            else
             {
                 return StatusCode(500, "Internal server error");
             }
         }
-
-        // POST: api/Auth/logout
-        [HttpPost("logout")]
-        public async Task<IActionResult> Logout()
-        {
-            try
-            {
-                await HttpContext.SignOutAsync(
-                CookieAuthenticationDefaults.AuthenticationScheme);
-                return Ok();
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, "Internal server error");
-            }
-        }
-
     }
 }

@@ -5,15 +5,13 @@ using System.Threading.Tasks;
 
 namespace Disney.Models
 {
-    public class Character
+    public class CharacterDTO
     {
-        public long Id { get; set; }
         public byte[] Image { get; set; }
         public string Name { get; set; }
         public int Age { get; set; }
         public float Weight { get; set; }
         public string History { get; set; }
-
-        public ICollection<CharacterMovie> CharacterMovies { get; set; }
+        public ICollection<MovieOrSerieDTO> MovieOrSeries { get; set; }
     }
 }
