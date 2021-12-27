@@ -1,4 +1,4 @@
-using Disney.Auth;
+using Disney.Services;
 using Disney.Models;
 using Disney.Repositories;
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -17,6 +17,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Disney.Repositories.Interfaces;
+using Microsoft.AspNetCore.Identity;
 
 namespace Disney
 {
@@ -33,10 +35,23 @@ namespace Disney
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddRazorPages();
+            services.AddControllers();
+
+            services.AddSession();
+            services.AddDbContext<DisneyContext>(options => options
+               .UseSqlServer(Configuration.GetConnectionString("DisneyDataBase")));
+
+            services.AddIdentity<IdentityUser, IdentityRole>(options =>
+            {
+                options.Password.RequireDigit = true;
+                options.Password.RequiredLength = 5;
+            }).AddEntityFrameworkStores<DisneyContext>()
+                .AddDefaultTokenProviders();
+
             services.AddAuthentication(auth =>
             {
                 auth.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-                //auth.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+                auth.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
             })
            .AddJwtBearer(options =>
            {
@@ -50,14 +65,13 @@ namespace Disney
                    ValidAudience = Configuration["Jwt:Issuer"],
                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Configuration["Jwt:Key"]))
                };
-           });
-
-            services.AddSession();
-            services.AddDbContext<DisneyContext>(options => options
-               .UseSqlServer(Configuration.GetConnectionString("DisneyDataBase")));
+           });                   
+            
             services.AddScoped<ICharacterRepository, CharacterRepository>();
-            services.AddScoped<IUserRepository, UserRepository>();
             services.AddScoped<ITokenService, TokenService>();
+            services.AddScoped<IMovieRepository, MovieRepository>();
+            services.AddScoped<IUserService, UserService>();
+            services.AddTransient<IEmailSender, EmailSender>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -86,17 +100,18 @@ namespace Disney
             });
 
             app.UseHttpsRedirection();
+
             app.UseStaticFiles();
             app.UseRouting();
+
             app.UseAuthentication();
             app.UseAuthorization();
+
 
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapRazorPages();
-                endpoints.MapControllerRoute(
-                name: "default",
-                pattern: "{controller=characters}/{ action = Get}");
+                endpoints.MapControllers();
             });
         }
     }

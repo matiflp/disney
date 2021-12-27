@@ -1,6 +1,6 @@
-﻿using Disney.Auth;
+﻿using Disney.Services;
 using Disney.Models;
-using Disney.Repositories;
+using Disney.Repositories.Interfaces;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Http;
@@ -13,6 +13,8 @@ using System.Security.Claims;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Disney.Models.DTOs;
+using Disney.Models.Auth;
 
 namespace Disney.Controllers
 {
@@ -22,50 +24,27 @@ namespace Disney.Controllers
     {
         private readonly IConfiguration _config;
         private readonly ITokenService _tokenService;
-        private readonly IUserRepository _userRepository;
+        private readonly IUserService _userService;
         private string generatedToken = null;
 
-        public AuthController(IConfiguration config, ITokenService tokenService, IUserRepository userRepository)
+        public AuthController(IConfiguration config, ITokenService tokenService, IUserService userService)
         {
             _config = config;
             _tokenService = tokenService;
-            _userRepository = userRepository;
+            _userService = userService;
         }
 
         // POST: api/Auth/register
-        [HttpPost("register")]
-        public IActionResult Register([FromBody] UserDTO user)
+        [HttpPost, Route("register")]
+        public async Task<IActionResult> Register([FromBody] RegisterModel user)
         {
             try
             {
-                // Verificamos que email y password no esten vacios.
-                if (String.IsNullOrEmpty(user.Email) || String.IsNullOrEmpty(user.Password))
-                    return StatusCode(403, "Datos inválidos");
+                var result = await _userService.RegisterUserAsync(user);
+                if (result.IsSuccess)
+                    return Ok(result); // Status Code: 200 
 
-                // Validamos que la contraseña cumpla con ciertos criterios
-                if (!Regex.IsMatch(user.Password, "^(?=\\w*\\d)(?=\\w*[A-Z])(?=\\w*[a-z])\\S{8,16}$"))
-                    return StatusCode(403, "La contraseña debe tener al entre 8 y 16 caracteres, al menos un dígito, " +
-                        "al menos una minúscula y al menos una mayúscula.");
-
-                // Validamos que el mail ingresado sea valido
-                if (!Regex.IsMatch(user.Email, "^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\\.[a-zA-Z0-9-]+)*$"))
-                    return StatusCode(403, "El email ingresado no es válido");
-
-                // De ser válido obtenemos el mail y verificamos que no este en uso
-                User dbUser = _userRepository.FindByEmail(user.Email);
-                if (dbUser != null)
-                    return StatusCode(403, "Email está en uso");
-
-                User newUser = new()
-                {
-                    Email = user.Email,
-                    UserName = user.UserName,
-                    Password = user.Password,
-                };
-
-                _userRepository.Save(newUser);
-                // Retornamos el nuevo jugador
-                return StatusCode(201, newUser);
+                return BadRequest(result);
             }
             catch (Exception ex)
             {
@@ -74,34 +53,38 @@ namespace Disney.Controllers
         }
 
         // POST: api/Auth/login
-        [HttpPost("login")]
-        public IActionResult Login([FromBody] UserDTO user)
+        [HttpPost, Route("login")]
+        public async Task<IActionResult> Login([FromBody] LoginModel user)
         {
-            User validUser = _userRepository.GetUser(user);
-            if (user == null || !String.Equals(validUser.Password, user.Password))
-                return Unauthorized();
-
-            //IActionResult response = Unauthorized();
-
-            if (validUser != null)
+            try
             {
-                generatedToken = _tokenService.BuildToken(_config["Jwt:Key"].ToString(), _config["Jwt:Issuer"].ToString(),
-                validUser);
+                var result = await _userService.LoginUserAsync(user);
 
-                if (generatedToken != null)
+                if (result.IsSuccess)
                 {
-                    HttpContext.Session.SetString("Token", generatedToken);
-                    return Ok();
+                    generatedToken = _tokenService.BuildToken(_config["Jwt:Key"].ToString(), _config["Jwt:Issuer"].ToString(),
+                    user);
+
+                    if (generatedToken != null)
+                    {
+                        HttpContext.Session.SetString("Token", generatedToken);
+                        return Ok(result);
+                    }
+                    else
+                    {
+                        return StatusCode(500, "Internal server error");
+                    }
                 }
                 else
                 {
-                    return StatusCode(500, "Internal server error");
+                    return BadRequest(result);
                 }
             }
-            else
+            catch(Exception ex)
             {
-                return StatusCode(500, "Internal server error");
+                return StatusCode(500, ex.Message);
             }
+            
         }
     }
 }

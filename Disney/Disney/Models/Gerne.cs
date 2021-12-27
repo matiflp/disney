@@ -9,7 +9,7 @@ namespace Disney.Models
     {
         public long Id { get; set; }
         public string Name { get; set; }
-        public string Image { get; set; }
+        public byte[] Image { get; set; }
         public long MovieOrSerieId { get; set; }
         public MovieOrSerie MovieOrSerie { get; set; }
 
