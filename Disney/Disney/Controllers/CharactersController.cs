@@ -3,9 +3,7 @@ using Disney.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Disney.Services;
 using Microsoft.Extensions.Configuration;
@@ -15,9 +13,9 @@ using Disney.Models.DTOs;
 
 namespace Disney.Controllers
 {
+    [Authorize]
     [Route("api/characters")]
     [ApiController]
-    //[Authorize]
     public class CharactersController : ControllerBase
     {
         private readonly ICharacterRepository _characterRepository;

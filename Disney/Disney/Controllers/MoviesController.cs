@@ -1,5 +1,6 @@
 ﻿using Disney.Models;
 using Disney.Models.DTOs;
+using Microsoft.AspNetCore.Authorization;
 using Disney.Repositories.Interfaces;
 using Disney.Services;
 using Microsoft.AspNetCore.Http;
@@ -14,6 +15,7 @@ using System.Threading.Tasks;
 
 namespace Disney.Controllers
 {
+    [Authorize]
     [Route("api/movies")]
     [ApiController]
     public class MoviesController : ControllerBase
