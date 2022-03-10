@@ -1,13 +1,8 @@
 ﻿using Disney.Models.Auth;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Configuration;
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Security.Claims;
-using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
@@ -65,7 +60,7 @@ namespace Disney.Services
             var identityUser = new IdentityUser
             {
                 Email = model.Email,
-                UserName = model.Email,
+                UserName = model.UserName,
             };
 
             var result = await _userManger.CreateAsync(identityUser, model.Password);

@@ -1,13 +1,12 @@
 ﻿using Disney.Models;
 using Disney.Models.DTOs;
-using Microsoft.AspNetCore.Authorization;
 using Disney.Repositories.Interfaces;
 using Disney.Services;
+using Disney.Utils;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -15,23 +14,25 @@ using System.Threading.Tasks;
 
 namespace Disney.Controllers
 {
-    [Authorize]
+    //[Authorize]
     [Route("api/movies")]
     [ApiController]
     public class MoviesController : ControllerBase
     {
-        private readonly ICharacterRepository _characterRepository;
-        private readonly IMovieRepository _movieRepository;
         private readonly ITokenService _tokenSevice;
         private readonly IConfiguration _configuration;
+        private readonly ICharacterRepository _characterRepository;
+        private readonly IMovieRepository _movieRepository;
+        private readonly IFileService _fileService;
 
-        public MoviesController(ICharacterRepository characterRepository, ITokenService tokenService, 
-            IConfiguration configuration, IMovieRepository movieRepository)
+        public MoviesController(ICharacterRepository characterRepository, ITokenService tokenService,
+            IConfiguration configuration, IMovieRepository movieRepository, IFileService fileService)
         {
             _characterRepository = characterRepository;
             _tokenSevice = tokenService;
             _configuration = configuration;
             _movieRepository = movieRepository;
+            _fileService = fileService;
         }
 
         // GET: api/<MoviesController>
@@ -44,7 +45,7 @@ namespace Disney.Controllers
                 if (string.IsNullOrEmpty(token))
                     return Forbid();
 
-                if (_tokenSevice.IsTokenValid(_configuration["Jwt:Key"].ToString(), 
+                if (_tokenSevice.IsTokenValid(_configuration["Jwt:Key"].ToString(),
                     _configuration["Jwt:Issuer"].ToString(), token))
                 {
                     var movies = _movieRepository.GetMovies();
@@ -88,7 +89,7 @@ namespace Disney.Controllers
                             Image = movie.Image,
                             CreationDate = movie.CreationDate,
                             Qualification = movie.Qualification,
-                            Gernes = movie.Gernes.Select(gerne => new Gerne
+                            Gernes = movie.Gernes.Select(gerne => new GenreDTO
                             {
                                 Name = gerne.Name
                             }).ToList(),
@@ -136,7 +137,7 @@ namespace Disney.Controllers
                         movies = movies.Where(x => x.Title.Contains(title) ||
                                                    x.Gernes.Any(gernes => gernes.Name.Equals(gerne)))
                                                           .ToList();
-                        if(movies != null)
+                        if (movies != null)
                         {
                             if (order.ToLower().Equals("asc"))
                                 movies = movies.OrderBy(moviess => moviess.CreationDate);
@@ -145,7 +146,7 @@ namespace Disney.Controllers
                         }
                     }
                     else
-                        return NotFound("Película no encontrado");
+                        return NotFound("Película no encontrada");
 
                     return Ok(movies);
                 }
@@ -160,7 +161,7 @@ namespace Disney.Controllers
 
         // POST api/<MoviesController>
         [HttpPost]
-        public IActionResult Post([FromBody] MovieOrSerieDTO movie)
+        public async Task<IActionResult> Post([FromBody] MovieOrSerieDTO movie)
         {
             try
             {
@@ -173,36 +174,35 @@ namespace Disney.Controllers
 
                     if (_movieRepository.FindByName(movie.Title) != null)
                     {
-                        return StatusCode(403, "Esta pelicula ya se encuentra en la base de datos");
+                        return StatusCode(403, "Esta película ya se encuentra en la base de datos");
                     }
 
-                    var characterId = _characterRepository.GetLastId();
                     var movieSerieId = _movieRepository.GetLastId() + 1;
 
                     var moviee = new MovieOrSerie
                     {
                         Title = movie.Title,
-                        Image = movie.Image,
-                        CreationDate = movie.CreationDate,
+                        Image = !string.IsNullOrEmpty(movie.Image) ? await _fileService.UploadEncodedImageAsync(movie.Image, movie.Title, ApplicationConstants.MoviesSeriesContainer) : "",
+                        CreationDate = DateTime.Parse(movie.CreationDate.ToString().Substring(0, 8)),
                         Qualification = movie.Qualification,
-                        Gernes = movie.Gernes?.Select(gernes => new Gerne
+                        Gernes = (await Task.WhenAll(movie.Gernes?.Select(async gernes => new Genre
                         {
                             Name = gernes.Name,
-                            Image = gernes.Image
-                        }).ToList(),
-                        CharacterMovies = movie.CharacterMovies?.Select(characterMovie => new CharacterMovie
+                            Image = !string.IsNullOrEmpty(gernes.Image) ? await _fileService.UploadEncodedImageAsync(gernes.Image, gernes.Name, ApplicationConstants.GenresContainer) : ""
+                        }))).ToList(),
+                        CharacterMovies = (await Task.WhenAll(movie.CharacterMovies?.Select(async characterMovie => new CharacterMovie
                         {
                             MovieSerieId = movieSerieId,
-                            CharacterId = _characterRepository.FindByName(characterMovie.Character.Name) != null ? _characterRepository.FindByName(characterMovie.Character.Name).Id : characterId++,
+                            CharacterId = _characterRepository.FindByName(characterMovie.Character.Name) != null ? _characterRepository.FindByName(characterMovie.Character.Name).Id : 0,
                             Character = _characterRepository.FindByName(characterMovie.Character.Name) != null ? null : new Character
                             {
                                 Name = characterMovie.Character.Name,
                                 Age = characterMovie.Character.Age,
                                 History = characterMovie.Character.History,
-                                Image = characterMovie.Character.Image,
+                                Image = !string.IsNullOrEmpty(characterMovie.Character.Image) ? await _fileService.UploadEncodedImageAsync(characterMovie.Character.Image, characterMovie.Character.Name, ApplicationConstants.CharactersContainer) : "",
                                 Weight = characterMovie.Character.Weight
                             }
-                        }).ToList()
+                        }))).ToList()
                     };
 
                     _movieRepository.Save(moviee);
@@ -222,7 +222,7 @@ namespace Disney.Controllers
 
         // PUT api/<MoviesController>/5
         [HttpPut("{id}")]
-        public IActionResult Put(int id, [FromBody] MovieOrSerieDTO movie)
+        public async Task<IActionResult> Put(int id, [FromBody] MovieOrSerieDTO movie)
         {
             try
             {
@@ -236,40 +236,37 @@ namespace Disney.Controllers
 
                     if (moviee != null)
                     {
-
-                        var characterId = _characterRepository.GetLastId();
-
-                        _movieRepository.Save(new MovieOrSerie
+                        moviee.Id = id;
+                        moviee.Title = movie.Title;
+                        moviee.Image = !string.IsNullOrEmpty(movie.Image) ? await _fileService.UploadEncodedImageAsync(movie.Image, movie.Title, ApplicationConstants.MoviesSeriesContainer) : "";
+                        moviee.CreationDate = movie.CreationDate;
+                        moviee.Qualification = movie.Qualification;
+                        moviee.Gernes = (await Task.WhenAll(movie.Gernes?.Select(async gernes => new Genre
                         {
-                            Title = movie.Title,
-                            Image = movie.Image,
-                            CreationDate = movie.CreationDate,
-                            Qualification = movie.Qualification,
-                            Gernes = movie.Gernes?.Select(gernes => new Gerne
+                            Id = gernes.Id,
+                            Name = gernes.Name,
+                            Image = !string.IsNullOrEmpty(gernes.Image) ? await _fileService.UploadEncodedImageAsync(gernes.Image, gernes.Name, ApplicationConstants.GenresContainer) : ""
+                        }))).ToList();
+                        moviee.CharacterMovies = (await Task.WhenAll(movie.CharacterMovies?.Select(async characterMovie => new CharacterMovie
+                        {
+                            Id = characterMovie.Id,
+                            Character = _characterRepository.FindByName(characterMovie.Character.Name) != null ? _characterRepository.FindByName(characterMovie.Character.Name) : new Character
                             {
-                                Name = gernes.Name,
-                                Image = gernes.Image
-                            }).ToList(),
-                            CharacterMovies = movie.CharacterMovies?.Select(characterMovie => new CharacterMovie
-                            {
-                                MovieSerieId = id,
-                                CharacterId = _characterRepository.FindByName(characterMovie.Character.Name) != null ? _characterRepository.FindByName(characterMovie.Character.Name).Id : characterId + 1,
-                                Character = _characterRepository.FindByName(characterMovie.Character.Name) != null ? null : new Character
-                                {
-                                    Name = characterMovie.Character.Name,
-                                    Age = characterMovie.Character.Age,
-                                    History = characterMovie.Character.History,
-                                    Image = characterMovie.Character.Image,
-                                    Weight = characterMovie.Character.Weight
-                                }
-                            }).ToList()
-                        });
+                                Name = characterMovie.Character.Name,
+                                Age = characterMovie.Character.Age,
+                                History = characterMovie.Character.History,
+                                Image = !string.IsNullOrEmpty(characterMovie.Character.Image) ? await _fileService.UploadEncodedImageAsync(characterMovie.Character.Image, characterMovie.Character.Name, ApplicationConstants.CharactersContainer) : "",
+                                Weight = characterMovie.Character.Weight
+                            }
+                        }))).ToList();
+
+                        _movieRepository.Save(moviee);
 
                         return Ok("Datos Modificados");
                     }
                     else
                     {
-                        return BadRequest("No se pudo actualizar. Personaje no encontrado.");
+                        return BadRequest("No se pudo actualizar. Película no encontrado.");
                     }
                 }
 
@@ -299,11 +296,11 @@ namespace Disney.Controllers
                     {
                         _movieRepository.DeleteMovie(movie);
 
-                        return Ok("Personaje eliminado");
+                        return Ok("Película eliminado");
                     }
                     else
                     {
-                        return BadRequest("El personaje a eliminar no existe");
+                        return BadRequest("La Película a eliminar no existe");
                     }
                 }
 

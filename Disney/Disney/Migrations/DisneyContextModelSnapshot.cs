@@ -32,8 +32,8 @@ namespace Disney.Migrations
                     b.Property<string>("History")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<byte[]>("Image")
-                        .HasColumnType("varbinary(max)");
+                    b.Property<string>("Image")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Name")
                         .HasColumnType("nvarchar(max)");
@@ -68,15 +68,15 @@ namespace Disney.Migrations
                     b.ToTable("CharacterMovies");
                 });
 
-            modelBuilder.Entity("Disney.Models.Gerne", b =>
+            modelBuilder.Entity("Disney.Models.Genre", b =>
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("bigint")
                         .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
-                    b.Property<byte[]>("Image")
-                        .HasColumnType("varbinary(max)");
+                    b.Property<string>("Image")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<long>("MovieOrSerieId")
                         .HasColumnType("bigint");
@@ -101,8 +101,8 @@ namespace Disney.Migrations
                     b.Property<DateTime?>("CreationDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<byte[]>("Image")
-                        .HasColumnType("varbinary(max)");
+                    b.Property<string>("Image")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<byte>("Qualification")
                         .HasColumnType("tinyint");
@@ -330,7 +330,7 @@ namespace Disney.Migrations
                     b.Navigation("MovieSerie");
                 });
 
-            modelBuilder.Entity("Disney.Models.Gerne", b =>
+            modelBuilder.Entity("Disney.Models.Genre", b =>
                 {
                     b.HasOne("Disney.Models.MovieOrSerie", "MovieOrSerie")
                         .WithMany("Gernes")

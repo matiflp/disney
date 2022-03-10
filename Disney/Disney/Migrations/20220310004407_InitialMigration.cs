@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 namespace Disney.Migrations
 {
-    public partial class InitialCreate : Migration
+    public partial class InitialMigration : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
@@ -52,7 +52,7 @@ namespace Disney.Migrations
                 {
                     Id = table.Column<long>(type: "bigint", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    Image = table.Column<byte[]>(type: "varbinary(max)", nullable: true),
+                    Image = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     Name = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     Age = table.Column<int>(type: "int", nullable: false),
                     Weight = table.Column<float>(type: "real", nullable: false),
@@ -69,7 +69,7 @@ namespace Disney.Migrations
                 {
                     Id = table.Column<long>(type: "bigint", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    Image = table.Column<byte[]>(type: "varbinary(max)", nullable: true),
+                    Image = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     Title = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     CreationDate = table.Column<DateTime>(type: "datetime2", nullable: true),
                     Qualification = table.Column<byte>(type: "tinyint", nullable: false)
@@ -218,7 +218,7 @@ namespace Disney.Migrations
                     Id = table.Column<long>(type: "bigint", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     Name = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    Image = table.Column<byte[]>(type: "varbinary(max)", nullable: true),
+                    Image = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     MovieOrSerieId = table.Column<long>(type: "bigint", nullable: false)
                 },
                 constraints: table =>

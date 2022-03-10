@@ -1,12 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-
-namespace Disney.Models.DTOs
+﻿namespace Disney.Models.DTOs
 {
     public class CharacterMovieDTO
     {
+        public long Id { get; set; }
         public long CharacterId { get; set; }
         public CharacterDTO Character { get; set; }
 

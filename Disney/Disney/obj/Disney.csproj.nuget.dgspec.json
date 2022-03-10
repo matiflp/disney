@@ -46,6 +46,10 @@
         "net5.0": {
           "targetAlias": "net5.0",
           "dependencies": {
+            "AspNetCore.Mvc.ImageBase64": {
+              "target": "Package",
+              "version": "[1.0.0, )"
+            },
             "Microsoft.AspNetCore.Authentication": {
               "target": "Package",
               "version": "[2.2.0, )"
@@ -83,6 +87,10 @@
             "SendGrid": {
               "target": "Package",
               "version": "[9.25.1, )"
+            },
+            "Swashbuckle.AspNetCore": {
+              "target": "Package",
+              "version": "[6.2.3, )"
             }
           },
           "imports": [

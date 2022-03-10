@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace Disney.Models
 {
@@ -10,13 +8,14 @@ namespace Disney.Models
     {
         [Key]
         public long Id { get; set; }
-        public byte[] Image { get; set; }
+        public string Image { get; set; }
         public string Title { get; set; }
         [DataType(DataType.DateTime)]
+        [DisplayFormat(DataFormatString = "{0:yyyy-MM-dd}", ApplyFormatInEditMode = true)]
         public DateTime? CreationDate { get; set; }
         public byte Qualification { get; set; }
 
         public ICollection<CharacterMovie> CharacterMovies { get; set; }
-        public ICollection<Gerne> Gernes { get; set; }
+        public ICollection<Genre> Gernes { get; set; }
     }
 }

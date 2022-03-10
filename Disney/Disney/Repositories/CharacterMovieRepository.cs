@@ -16,6 +16,16 @@ namespace Disney.Repositories
             return FindByCondition(characterMovie => characterMovie.Id == id).FirstOrDefault();
         }
 
+        public bool GetCharacterId(long characterId)
+        {
+            return FindByCondition(characterMovie => characterMovie.CharacterId == characterId).FirstOrDefault() != null;
+        }
+
+        public bool GetMovieSerieId(long movieSerieId)
+        {
+            return FindByCondition(characterMovie => characterMovie.MovieSerieId == movieSerieId).FirstOrDefault() != null;
+        }
+
         public void Save(CharacterMovie characterMovie)
         {
             if (characterMovie.Id == 0)

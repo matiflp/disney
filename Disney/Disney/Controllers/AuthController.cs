@@ -1,19 +1,9 @@
 ﻿using Disney.Services;
-using Disney.Models;
-using Disney.Repositories.Interfaces;
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using Microsoft.Extensions.Configuration;
-using System.Collections.Generic;
-using System.Linq;
-using System.Security.Claims;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Disney.Models.DTOs;
 using Disney.Models.Auth;
 
 namespace Disney.Controllers

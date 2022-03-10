@@ -1,13 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using System.Collections.Generic;
 
 namespace Disney.Models.DTOs
 {
     public class CharacterDTO
     {
-        public byte[] Image { get; set; }
+        public string Image { get; set; }
         public string Name { get; set; }
         public int Age { get; set; }
         public float Weight { get; set; }

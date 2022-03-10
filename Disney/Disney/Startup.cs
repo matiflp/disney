@@ -35,12 +35,26 @@ namespace Disney
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddRazorPages();
-            services.AddControllers();
 
+            services.AddControllers();
+            services.AddSwaggerGen(options =>
+            {
+                options.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo
+                {
+                    Title = "Personajes de Disney",
+                    Version = "v1",
+                    Description = "Una Web API en ASP.NET para ver todos los personajes de Disney y sus Películas!"
+                });
+            });
+            
             services.AddSession();
+            services.AddHttpContextAccessor();
+
+            // Add Database Context
             services.AddDbContext<DisneyContext>(options => options
                .UseSqlServer(Configuration.GetConnectionString("DisneyDataBase")));
 
+            // Add Identity
             services.AddIdentity<IdentityUser, IdentityRole>(options =>
             {
                 options.Password.RequireDigit = true;
@@ -48,6 +62,7 @@ namespace Disney
             }).AddEntityFrameworkStores<DisneyContext>()
                 .AddDefaultTokenProviders();
 
+            // Add JWT
             services.AddAuthentication(auth =>
             {
                 auth.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -65,13 +80,16 @@ namespace Disney
                    ValidAudience = Configuration["Jwt:Issuer"],
                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Configuration["Jwt:Key"]))
                };
-           });                   
-            
+           });
+
+            // Add Dependency Injection
             services.AddScoped<ICharacterRepository, CharacterRepository>();
+            services.AddScoped<ICharacterMovieRepository, CharacterMovieRepository>();
             services.AddScoped<ITokenService, TokenService>();
             services.AddScoped<IMovieRepository, MovieRepository>();
             services.AddScoped<IUserService, UserService>();
             services.AddTransient<IEmailSender, EmailSender>();
+            services.AddSingleton<IFileService, FileService>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -80,6 +98,11 @@ namespace Disney
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
+                app.UseSwagger();
+                app.UseSwaggerUI(options =>
+                {
+                    options.SwaggerEndpoint("/swagger/v1/swagger.json", "Personajes de Disney V1");
+                });
             }
             else
             {
@@ -87,6 +110,11 @@ namespace Disney
                 // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
                 app.UseHsts();
             }
+
+            app.UseHttpsRedirection();
+            app.UseStaticFiles();
+
+            app.UseRouting();
 
             app.UseSession();
             app.Use(async (context, next) =>
@@ -98,20 +126,15 @@ namespace Disney
                 }
                 await next();
             });
-
-            app.UseHttpsRedirection();
-
-            app.UseStaticFiles();
-            app.UseRouting();
-
+                     
             app.UseAuthentication();
             app.UseAuthorization();
-
 
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapRazorPages();
                 endpoints.MapControllers();
+                endpoints.MapSwagger();
             });
         }
     }
