@@ -7,6 +7,7 @@ personajes que lo componen y entender en qué películas estos participaron. Por
 
 ##### Backend:
 - .Net Core 5
+- Entity FrameworkCore
 - SQL Server
 - JWT
 - Sendgrid
