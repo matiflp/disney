@@ -7,7 +7,6 @@ personajes que lo componen y entender en qué películas estos participaron. Por
 
 ### Tecnologias utilizadas
 
-##### Backend:
 - .Net Core 5
 - Entity Framework Core
 - SQL Server
