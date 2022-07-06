@@ -4,6 +4,7 @@ namespace Disney.Models.DTOs
 {
     public class CharacterDTO
     {
+        public long Id { get; set; }
         public string Image { get; set; }
         public string Name { get; set; }
         public int Age { get; set; }

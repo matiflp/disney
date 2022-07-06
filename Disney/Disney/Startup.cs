@@ -37,6 +37,22 @@ namespace Disney
             services.AddRazorPages();
 
             services.AddControllers();
+
+            services.AddCors(options =>
+            {
+                options.AddPolicy("react-disney",
+                    policy =>
+                    {
+                        policy.WithOrigins("http://localhost:3000",
+                                            "http://localhost:3000/login",
+                                            "https://ancient-savannah-14728.herokuapp.com/")
+                        .AllowAnyHeader()
+                        .AllowAnyMethod()
+                        .AllowCredentials()
+                        .WithExposedHeaders(new string[] { ".AspNetCore.Session" });
+                    });
+            });
+
             services.AddSwaggerGen(options =>
             {
                 options.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo
@@ -111,10 +127,12 @@ namespace Disney
                 app.UseHsts();
             }
 
-            app.UseHttpsRedirection();
+            //app.UseHttpsRedirection();
             app.UseStaticFiles();
 
             app.UseRouting();
+
+            app.UseCors("react-disney");
 
             app.UseSession();
             app.Use(async (context, next) =>

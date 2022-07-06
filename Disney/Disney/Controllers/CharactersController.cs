@@ -56,7 +56,9 @@ namespace Disney.Controllers
 
                     var charactersView = characters.Select(character => new CharacterDTO
                     {
+                        Id = character.Id,
                         Name = character.Name,
+                        History = character.History,
                         Image = character.Image,
                     });
 
@@ -182,7 +184,7 @@ namespace Disney.Controllers
                         Age = character.Age,
                         Weight = character.Weight,
                         History = character.History,
-                        CharacterMovies = (await Task.WhenAll(character.CharacterMovies?.Select(async charMovie => new CharacterMovie
+                        CharacterMovies = character.CharacterMovies == null? null : (await Task.WhenAll(character.CharacterMovies?.Select(async charMovie => new CharacterMovie
                         {
                             CharacterId = characterId,
                             MovieSerieId = _movieRepository.FindByName(charMovie.MovieSerie.Title) != null ? _movieRepository.FindByName(charMovie.MovieSerie.Title).Id : 0,
@@ -247,7 +249,7 @@ namespace Disney.Controllers
                             History = character.History,
                             Image = !string.IsNullOrEmpty(character.Image) ? await _fileService.UploadEncodedImageAsync(character.Image, character.Name, ApplicationConstants.CharactersContainer) : "",
                             Weight = character.Weight,
-                            CharacterMovies = (await Task.WhenAll(character.CharacterMovies?.Select(async charMovie => new CharacterMovie
+                            CharacterMovies = character.CharacterMovies == null ? null : (await Task.WhenAll(character.CharacterMovies?.Select(async charMovie => new CharacterMovie
                             {
                                 Id = charMovie.Id,
                                 MovieSerie = _movieRepository.FindByName(charMovie.MovieSerie.Title) != null ? _movieRepository.FindByName(charMovie.MovieSerie.Title) : new MovieOrSerie
@@ -266,7 +268,9 @@ namespace Disney.Controllers
                             }))).ToList()
                         });
 
-                        return Ok("Personaje modificado");
+                        var newCharacter = _characterRepository.FindById(id); // Se obtiene el componente para retornarlo
+
+                        return Ok(newCharacter);
                     }
                     else
                     {

@@ -48,6 +48,7 @@ namespace Disney.Repositories
         public void DeleteCharacter(Character character)
         {
             Delete(character);
+            SaveChanges();
         }
     }
 }

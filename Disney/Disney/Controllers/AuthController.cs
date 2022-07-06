@@ -5,6 +5,7 @@ using System;
 using Microsoft.Extensions.Configuration;
 using System.Threading.Tasks;
 using Disney.Models.Auth;
+using Microsoft.AspNetCore.Cors;
 
 namespace Disney.Controllers
 {
@@ -43,6 +44,7 @@ namespace Disney.Controllers
         }
 
         // POST: api/Auth/login
+        [EnableCors("react-disney")]
         [HttpPost, Route("login")]
         public async Task<IActionResult> Login([FromBody] LoginModel user)
         {
@@ -67,7 +69,7 @@ namespace Disney.Controllers
                 }
                 else
                 {
-                    return BadRequest(result);
+                    return StatusCode(400, result);
                 }
             }
             catch(Exception ex)
